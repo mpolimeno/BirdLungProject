@@ -48,10 +48,10 @@ z_vort = x_vort + 1i*y_vort;
 % disp(['vortex z-position is ' num2str(z_vort)])
 
 % vortex circulation computed using Kutta condition at left corner
-%gamma = abs(1 + z_vort)^2/imag(z_vort)*(u_minus/(1 - 1/k) - u_plus/(1 + 1/k)); 
+gamma = abs(1 + z_vort)^2/imag(z_vort)*(u_minus/(1 - 1/k) - u_plus/(1 + 1/k)); 
 %gamma = 0.;
 %%Matteo 
-gamma = 0.5; % this would need to happen if you do not enforce the Kutta
+%gamma = 0.5; % this would need to happen if you do not enforce the Kutta
 %condition at left corner
 disp(['gamma = ' num2str(gamma)])
 

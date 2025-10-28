@@ -1,1 +1,1 @@
-# BirdLungProject
+This repo contains the MATLAB codes to compute flows inside a T junction

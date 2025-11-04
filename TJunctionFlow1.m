@@ -1,22 +1,36 @@
-function [p_A2A1,p_A3A1,phi_A2A1,phi_A3A1] = TJunctionFlow1(u_minus,u_plus,zeta_vort,cf)
+function [p_A2A1,p_A3A1,phi_A2A1,phi_A3A1] = TJunctionFlow1(u_minus,u_plus,zeta_vort,cf,RuttaCondition)
 
-% potential flow solution for flow inside T-junction with a single vortex
+% TJunctionFlow1 - Computes the potential flow solution for flow inside a T-junction with a single vortex
+%
+%   This function models the potential flow around a T-junction with a vortex positioned at a given location 
+%   in the complex plane. 
+%
+%   INPUTS:
+%     u_minus      - Inflow velocity on the left horizontal branch (scalar).
+%     u_plus       - Outflow velocity on the right horizontal branch (scalar).
+%                    Possible values for (u_minus,u_plus):
+%                    Case 1: (1,0.7);
+%                    Case 2: (1,0.75);
+%                    Case 3: (-1,-0.75);
+%     zeta_vort    - Complex number representing the position of the vortex in the complex plane.
+%                    Possible values for zeta_vort:
+%                    Case 1: zeta_vort = 0 + 1i*pi/2   -> Position for fixed Gamma=0.5
+%                    Case 2: zeta_vort = -0.25 + 1i*1.25 -> Vortex in the vertical branch
+%                    Case 3: zeta_vort = -0.75 + 1i*0.75 -> Vortex in the left horizontal branch
+%     cf           - Integer representing the figure object number for plotting.
+%     RuttaCondition - Boolean flag. If True, the Rutta condition is applied at the left corner, 
+%                      and gamma is computed. If False, gamma is set to 0.5
+
+% NOTES
+% Case 1 applies for RuttaCondition="False", while the other two cases are for RuttaCondition="True"
 
 k = sqrt(5);
-options_fsolve = optimset('display','off');
 
-% vortex (complex) position; used 0 + 1i*pi/2 before %%%MATTEO: This should
-% be the position used in Figure 10 of the notes
-% zeta_vort = -.25 + 1i*1.25; % vortex in vertical branch %% Matteo:fig 11a
-% zeta_vort = -0.75 + 1i*0.75; % vortex in left horizontal branch %%Matteo:
-% fig 11b
+% T-junction coordinates: 
+% junction is between -2<x<2 and 0<y<3, diameter 1
 
-% u_minus = 1; % inflow velocity on left horizontal branch
-% u_plus = 0.75; % outflow velocity on right horizontal branch
-
-% T-junction coordinates: junction is between -2<x<2 and 0<y<3, diameter 1
 % "1" matrices are 99x401; "2" matrices are 200x99
-load('TJunctionPotential_3-1a.mat'); % coarse solution for Z,Zeta
+load('../AnandFiles/TJunctionPotential_3-1a.mat'); % coarse solution for Z,Zeta
 %load('TJunctionPotential_3-2.mat'); % fine solution for Z,Zeta
 
 % assign correct matrix (1 or 2) in which to find vortex based on its location
@@ -45,14 +59,16 @@ else % use extrapolation by spline
     y_vort = interp2(ReZeta_vort,ImZeta_vort,imag(Z_vort),real(zeta_vort),imag(zeta_vort),'spline');
 end;
 z_vort = x_vort + 1i*y_vort;
-% disp(['vortex z-position is ' num2str(z_vort)])
+disp(['vortex z-position is ' num2str(z_vort)])
 
-% vortex circulation computed using Kutta condition at left corner
-gamma = abs(1 + z_vort)^2/imag(z_vort)*(u_minus/(1 - 1/k) - u_plus/(1 + 1/k)); 
-%gamma = 0.;
-%%Matteo 
-%gamma = 0.5; % this would need to happen if you do not enforce the Kutta
-%condition at left corner
+if RuttaCondition=="True"
+    % vortex circulation computed using Kutta condition at left corner
+    gamma = abs(1 + z_vort)^2/imag(z_vort)*(u_minus/(1 - 1/k) - u_plus/(1 + 1/k)); 
+elseif RuttaCondition=="False"
+    gamma = 0.5;
+else
+    error("Must Specify RuttaCondition as either True or False")
+end
 disp(['gamma = ' num2str(gamma)])
 
 % disp(['velocity at left corner is ' num2str(ComplexVelocity(-1,k,u_minus,u_plus,gamma,z_vort))])

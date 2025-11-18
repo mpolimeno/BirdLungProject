@@ -25,13 +25,22 @@ function [p_A2A1,p_A3A1,phi_A2A1,phi_A3A1] = TJunctionFlow1(u_minus,u_plus,zeta_
 % Case 1 applies for RuttaCondition="False", while the other two cases are for RuttaCondition="True"
 
 k = sqrt(5);
+options_fsolve = optimset('display','off');
 
 % T-junction coordinates: 
 % junction is between -2<x<2 and 0<y<3, diameter 1
 
 % "1" matrices are 99x401; "2" matrices are 200x99
-load('../AnandFiles/TJunctionPotential_3-1a.mat'); % coarse solution for Z,Zeta
+%load('../AnandFiles/TJunctionPotential_3-1a.mat'); % coarse solution for Z,Zeta
 %load('TJunctionPotential_3-2.mat'); % fine solution for Z,Zeta
+
+% Matteo: trying to see if I can get the same results by modifying
+% TJunctionPotential_3.m so that I will not have to load the data already
+[X1,Y1,Z1,X2,Y2,Z2,Zeta1,Zeta2] = TJunctionPotential_3;
+ReZeta1 = real(Zeta1)'; % transpose to allow for concatenation
+ReZeta2 = real(Zeta2);
+ImZeta1 = imag(Zeta1)'; % transpose to allow for concatenation
+ImZeta2 = imag(Zeta2);
 
 % assign correct matrix (1 or 2) in which to find vortex based on its location
 if (imag(zeta_vort) > 1) 
@@ -61,6 +70,7 @@ end;
 z_vort = x_vort + 1i*y_vort;
 disp(['vortex z-position is ' num2str(z_vort)])
 
+% Matteo: I added this to either fix gamma or compute it
 if RuttaCondition=="True"
     % vortex circulation computed using Kutta condition at left corner
     gamma = abs(1 + z_vort)^2/imag(z_vort)*(u_minus/(1 - 1/k) - u_plus/(1 + 1/k)); 
@@ -89,38 +99,38 @@ stag_func = @(z) -u_minus./(z + 1/k) + u_plus./(z - 1/k) - gamma*imag(z_vort)./a
 % % stag_func = @(z) -u_minus*(1./(z + 1/k) + 1/(1 - 1/k)*abs(1 + z_vort)^2./abs(z - z_vort).^2) + u_plus*(1./(z - 1/k) + 1/(1 + 1/k)*abs(1 + z_vort)^2./abs(z - z_vort).^2);
 
 % METHOD 1: find stagnation point using fsolve
-% [z_stag_boundary_2,~,eflag] = fsolve(stag_func,1 + .1*1i,options_fsolve);
-% zeta_stag_boundary_2 = TJunctionPotential_Zeta_Func(z_stag_boundary_2,k);
-% disp(['eflag = ' num2str(eflag) '; stagnation point on boundary (with vortex) using fsolve is at zeta = ' num2str(zeta_stag_boundary_2) '; z = ' num2str(z_stag_boundary_2)])
+[z_stag_boundary_2,~,eflag] = fsolve(stag_func,1 + .1*1i,options_fsolve);
+zeta_stag_boundary_2 = TJunctionPotential_Zeta_Func(z_stag_boundary_2,k);
+disp(['eflag = ' num2str(eflag) '; stagnation point on boundary (with vortex) using fsolve is at zeta = ' num2str(zeta_stag_boundary_2) '; z = ' num2str(z_stag_boundary_2)])
 
 % METHOD 2: find stagnation point by assuming its on right L-boundary
 z_stag_vec = [1/k+.01:.01:300]; % 1:.01:300;
 stag_func_vec = stag_func(z_stag_vec);
 
-% figure(cf+4)
-% title(['stagnation point identification'])
-% subplot(1,2,1); 
-% grid on;
-% plot(z_stag_vec,stag_func_vec,'.-k','MarkerSize',16)
-% xlabel('Re($z$)','interpreter','latex')
-% ylabel('velocity (Im($z$)=0)','interpreter','latex')
+figure(cf+4)
+title(['stagnation point identification'])
+subplot(1,2,1); 
+grid on;
+plot(z_stag_vec,stag_func_vec,'.-k','MarkerSize',16)
+xlabel('Re($z$)','interpreter','latex')
+ylabel('velocity (Im($z$)=0)','interpreter','latex')
 
-% METHOD 3: find stagnation point as intersection of contours
-% [X_stag,Y_stag] = meshgrid(-2:pi/300:2);
-% ZMat_stag = X_stag + 1i*Y_stag;
-% subplot(1,2,2)
-% hold on
-% [M_stagR,c_LstagR] = contour(X_stag,Y_stag,real(stag_func(ZMat_stag)),[0;0]);
-% c_LstagR.LineWidth = 3;
-% c_LstagR.Color = 'r';
-% [M_stagI,c_LstagI] = contour(X_stag,Y_stag,imag(ZMat_stag),[0;0]);
-% c_LstagI.LineWidth = 3;
-% c_LstagI.Color = 'b';
-% hold off
-% xlabel('Re($z$)','interpreter','latex')
-% ylabel('Im($z$)','interpreter','latex')
+%%METHOD 3: find stagnation point as intersection of contours
+[X_stag,Y_stag] = meshgrid(-2:pi/300:2);
+ZMat_stag = X_stag + 1i*Y_stag;
+subplot(1,2,2)
+hold on
+[M_stagR,c_LstagR] = contour(X_stag,Y_stag,real(stag_func(ZMat_stag)),[0;0]);
+c_LstagR.LineWidth = 3;
+c_LstagR.Color = 'r';
+[M_stagI,c_LstagI] = contour(X_stag,Y_stag,imag(ZMat_stag),[0;0]);
+c_LstagI.LineWidth = 3;
+c_LstagI.Color = 'b';
+hold off
+xlabel('Re($z$)','interpreter','latex')
+ylabel('Im($z$)','interpreter','latex')
 
-% use METHOD 2 to identify stagnation point
+% % use METHOD 2 to identify stagnation point
 stag_loc = find(stag_func_vec(2:end).*stag_func_vec(1:end-1) < 0);
 if (~isempty(stag_loc))
     stag_loc = stag_loc(1);
@@ -292,7 +302,7 @@ phi_A3A1 = PhiAvg2(A3_loc) - PhiAvg1(A1_loc);
 % end;
 % subplot(1,3,1); hold off; subplot(1,3,2); hold off; subplot(1,3,3); hold off;
 % subplot(1,3,3); xlim([-2 2]); ylim([0 3]);
-
+% 
 % plot streamlines using Im(w) = 0
 figure(cf+1)
 [M1,c1] = contour(ReZeta1,ImZeta1,imag(wpot1),50);
@@ -314,39 +324,39 @@ plot(real(zeta_stag_boundary_3),imag(zeta_stag_boundary_3),'.m','MarkerSize',24)
 xlabel('$x$','interpreter','latex'); ylabel('$y$','interpreter','latex')
 set(gca,'FontName','Times','FontSize',24)
 title(['$u_- = $ ' num2str(u_minus) '; $u_+ = $ ' num2str(u_plus) '; $\gamma =$ ' num2str(gamma)],'interpreter','latex')
-
-% %%%%% compute and plot stagnation streamline on streamline plot %%%%%
-% % THIS SNIPPET IS IRRELEVANT IF STAGNATION POINT IS FIXED TO BE AT CORNER
-% % determine stagnation point, if it exists
-% [Re_stag,Im_stag] = StagPointFind1(ReZeta2_vec,ImZeta2_vec,U2,V2);
-% zeta_stag = Re_stag + 1i*Im_stag;
-% zeta_stag = zeta_stag(abs(zeta_stag - zeta_vort) > 0.02); % remove artificial stagnation point detected at vortex position
 % 
-% if (~isempty(zeta_stag))
-%     
-%     % plot stagnation point on streamline plot
-%     figure(cf+1)
-%     hold on
-%     plot(real(zeta_vort),imag(zeta_vort),'.k','MarkerSize',36)
-%     plot(real(zeta_stag),imag(zeta_stag),'.r','MarkerSize',36)
-%     hold off
-%     
-%     % compute stagnation point in z-plane by interpolation
-%     x_stag = interp2(ReZeta2,ImZeta2,real(Z2),real(zeta_stag),imag(zeta_stag));
-%     y_stag = interp2(ReZeta2,ImZeta2,imag(Z2),real(zeta_stag),imag(zeta_stag));
-%     z_stag = x_stag + 1i*y_stag;
-%     
-%     % compute velocity potential at stagnation point
-%     w_stag = VelocityPotential(z_stag,k,u_minus,u_plus,gamma,z_vort);
-% 
-%     figure(cf+1)
-%     hold on
-%     [M_stag,c_stag] = contour(ReZeta2,ImZeta2,imag(wpot2),imag(w_stag)*[1;1]);
-%     c_stag.LineWidth = 3;
-%     c_stag.Color = 'r';
-%     hold off
-% end;
+% % %%%%% compute and plot stagnation streamline on streamline plot %%%%%
+% % % THIS SNIPPET IS IRRELEVANT IF STAGNATION POINT IS FIXED TO BE AT CORNER
+% % % determine stagnation point, if it exists
+[Re_stag,Im_stag] = StagPointFind1(ReZeta2_vec,ImZeta2_vec,U2,V2);
+zeta_stag = Re_stag + 1i*Im_stag;
+zeta_stag = zeta_stag(abs(zeta_stag - zeta_vort) > 0.02); % remove artificial stagnation point detected at vortex position
 
+if (~isempty(zeta_stag))
+
+    % plot stagnation point on streamline plot
+    figure(cf+1)
+    hold on
+    plot(real(zeta_vort),imag(zeta_vort),'.k','MarkerSize',36)
+    plot(real(zeta_stag),imag(zeta_stag),'.r','MarkerSize',36)
+    hold off
+
+    % compute stagnation point in z-plane by interpolation
+    x_stag = interp2(ReZeta2,ImZeta2,real(Z2),real(zeta_stag),imag(zeta_stag));
+    y_stag = interp2(ReZeta2,ImZeta2,imag(Z2),real(zeta_stag),imag(zeta_stag));
+    z_stag = x_stag + 1i*y_stag;
+
+    % compute velocity potential at stagnation point
+    w_stag = VelocityPotential(z_stag,k,u_minus,u_plus,gamma,z_vort);
+
+    figure(cf+1)
+    hold on
+    [M_stag,c_stag] = contour(ReZeta2,ImZeta2,imag(wpot2),imag(w_stag)*[1;1]);
+    c_stag.LineWidth = 3;
+    c_stag.Color = 'r';
+    hold off
+end;
+% 
 % compute and plot streamline emerging from left corner
 w_LTcorner = VelocityPotential(-1,k,u_minus,u_plus,gamma,z_vort);
 % disp(['velocity potential at left corner is ' num2str(w_LTcorner)])

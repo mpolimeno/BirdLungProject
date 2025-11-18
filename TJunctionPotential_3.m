@@ -1,4 +1,4 @@
-function [X1,Y1,Z1,X2,Y2,Z2] = TJunctionPotential_3
+function [X1,Y1,Z1,X2,Y2,Z2,Zeta1,Zeta2] = TJunctionPotential_3
 
 options = optimset('display','off');
 
@@ -23,6 +23,7 @@ for xind = 1:length(xi_v)
             %z_vec(ind) = z(1) + 1i*z(2);
             zg = z;
             Z1(ind,xind) = z(1) + 1i*z(2);
+            Zeta1(xind,ind) = zeta; % Matteo: I added this to return it for the vortices
         end;
         %disp(['eta = ' num2str(eta_v(ind)) '; eflag = ' num2str(eflag) '; z = ' num2str(z_vec(ind))]);
     end;
@@ -43,6 +44,7 @@ for xind = 1:length(xi_v)
             %z_vec(ind) = z(1) + 1i*z(2);
             zg = z;
             Z2(xind,ind) = z(1) + 1i*z(2);
+            Zeta2(xind,ind) = zeta; % Matteo: I added this to return it for the vortices
         end;
     end;
 end;

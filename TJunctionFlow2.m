@@ -6,19 +6,24 @@ k = sqrt(5);
 
 % vortex (complex) position; used 0 + 1i*pi/2 before
 % configuration for "forward" phase of cycle
-zeta_vort_minus = -.25 + 1i*1.25; % vortex in vertical branch
-zeta_vort_plus = 0.75 + 0.75*1i; % vortex in right horizontal branch
+%zeta_vort_minus = -.25 + 1i*1.25; % vortex in vertical branch
+%zeta_vort_plus = 0.75 + 0.75*1i; % vortex in right horizontal branch
 
 % configuration for "reverse" phase of cycle
+%Matteo % Fig 12b
 %zeta_vort_minus = -0.75 + 1i*0.75; % vortex in left horizontal branch
 %zeta_vort_plus = 0.25 + 1i*0.75; % vortex right-of-center in horizontal branch
+
+% Matteo % Fig 12a
+zeta_vort_minus = -0.25 + 1i*1.25; % vortex in left horizontal branch
+zeta_vort_plus = 0.75 + 1i*0.75; % vortex right-of-center in horizontal branch
 
 u_minus = 1; % inflow velocity on left horizontal branch
 u_plus = 0.75; % outflow velocity on right horizontal branch
 
 % T-junction coordinates: junction is between -2<x<2 and 0<y<3, diameter 1
 % "1" matrices are 99x401; "2" matrices are 200x99
-load('TJunctionPotential_3-2.mat')
+load('../AnandFiles/TJunctionPotential_3-2.mat')
 
 % assign correct matrix (1 or 2) in which to find vortex based on its location
 if (imag(zeta_vort_minus) > 1) 

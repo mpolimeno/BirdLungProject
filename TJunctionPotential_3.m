@@ -9,7 +9,7 @@ d_space = .01;
 % horizontal branch of pipe first; so iterate using vertical lines
 xi_v = -2:d_space:2; % variable along horizontal branch (x)
 eta_v = d_space:d_space:(1-d_space); % variable along pipe diameter (y)
-[X1,Y1] = meshgrid(xi_v,eta_v);
+[X1,Y1] = meshgrid(xi_v,eta_v); % so x1 and y1 should give you zeta1
 Z1 = NaN*ones(size(X1));
 for xind = 1:length(xi_v)
     disp(['horizontal branch: xi = ' num2str(xi_v(xind))]);
